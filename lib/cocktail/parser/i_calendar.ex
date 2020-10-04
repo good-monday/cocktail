@@ -163,8 +163,6 @@ defmodule Cocktail.Parser.ICalendar do
     if String.first(days_string) in ["+", "-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"] do
       with {:ok, days_of_week} <- parse_days_of_week_string(days_string) do
         {:ok, {:days_of_week, days_of_week |> Enum.reverse()}}
-      else
-        {:error, reason} -> {:error, reason}
       end
     else
       with {:ok, days} <- parse_days_string(days_string) do
@@ -287,18 +285,15 @@ defmodule Cocktail.Parser.ICalendar do
   defp parse_day("SA"), do: {:ok, :saturday}
   defp parse_day(_), do: {:error, :invalid_day}
 
-  @spec parse_days_of_week_string(String.t()) :: {:ok, [Cocktail.day_of_week()]} | {:error, :invalid_day | :invalid_nth_occurence} 
+  @spec parse_days_of_week_string(String.t()) :: {:ok, [Cocktail.day_of_week()]} 
+                                               | {:error, :invalid_day | :invalid_nth_occurence} 
   defp parse_days_of_week_string(days_of_week_string) do
     days_of_week_string
     |> String.split(",")
     |> Enum.map(&parse_day_of_week_string/1)
     |> parse_error_reduce
     |> parse_bind(fn l -> {:ok, Enum.group_by(l, &(elem(&1, 0)))} end)
-    |> parse_bind(fn l -> Enum.map(l, fn {day_atom, list} -> {day_atom, Enum.map(list, &(elem(&1, 1)))} end) end)
-    |> case do
-      {:error, reason} -> {:error, reason}
-      val -> {:ok, val}
-    end
+    |> parse_bind(fn l -> {:ok, Enum.map(l, fn {day_atom, list} -> {day_atom, Enum.map(list, &(elem(&1, 1)))} end)} end)
   end
 
   @spec parse_day_of_week_string(String.t()) :: {:ok, {Cocktail.day_atom(), [integer()]}} 
