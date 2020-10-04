@@ -28,7 +28,7 @@ defmodule Cocktail.ScheduleState do
       if Timex.compare(current_time, schedule.start_time) < 0,
         do: schedule.start_time,
         else: current_time
-
+        
     %__MODULE__{
       recurrence_rules: schedule.recurrence_rules |> Enum.map(&RuleState.new/1),
       recurrence_times: schedule.recurrence_times |> Enum.sort(&(Timex.compare(&1, &2) <= 0)),
