@@ -98,7 +98,7 @@ defmodule Cocktail.Builder.String do
       " " <> 
       on_day(day) 
 
-  @spec build_occurence(Cocktail.nth_occurence) :: Strint.t()
+  @spec build_occurence(Cocktail.nth_occurence) :: String.t()
   defp build_occurence(occurence) when occurence > 0, do: ordinalize(occurence)
   defp build_occurence(-1), do: "last"
   defp build_occurence(n), do: ordinalize(-n) <> " last"
