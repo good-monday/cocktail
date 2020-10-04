@@ -42,10 +42,6 @@ defmodule Cocktail.Validation.DayOfMonth do
     do_normalize_day_of_month(day_of_month, Timex.days_in_month(current_time))
   end
 
-  defp do_normalize_day_of_month(day_of_month, days_in_month) when day_of_month > days_in_month do
-    days_in_month
-  end
-
   defp do_normalize_day_of_month(day_of_month, _days_in_month) when day_of_month > 0 do
     day_of_month
   end
@@ -55,6 +51,6 @@ defmodule Cocktail.Validation.DayOfMonth do
   end
 
   defp do_normalize_day_of_month(day_of_month, days_in_month) when day_of_month < 0 do
-    days_in_month + day_of_month
+    days_in_month + day_of_month + 1
   end
 end

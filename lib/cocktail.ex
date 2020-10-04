@@ -17,6 +17,10 @@ defmodule Cocktail do
 
   @type day :: day_number | day_atom
 
+  @type day_of_week :: {day, [nth_occurence]}
+
+  @type nth_occurence :: 1..5 | -5..-1
+
   @type hour_number :: 0..23
 
   @type minute_number :: 0..59
@@ -40,6 +44,7 @@ defmodule Cocktail do
           | {:until, time}
           | {:days, [day]}
           | {:days_of_month, [day_of_month]}
+          | {:day_of_week, [day_of_week]}
           | {:hours, [hour_number]}
           | {:minutes, [minute_number]}
           | {:seconds, [second_number]}

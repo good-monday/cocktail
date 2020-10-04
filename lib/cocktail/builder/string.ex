@@ -11,10 +11,10 @@ defmodule Cocktail.Builder.String do
   """
 
   alias Cocktail.{Rule, Schedule}
-  alias Cocktail.Validation.{Day, HourOfDay, Interval, MinuteOfHour, SecondOfMinute}
+  alias Cocktail.Validation.{Day, HourOfDay, Interval, MinuteOfHour, SecondOfMinute, DayOfWeek}
 
   # These are the keys represented in the string representation of a schedule.
-  @represented_keys [:interval, :day, :hour_of_day, :minute_of_hour, :second_of_minute]
+  @represented_keys [:interval, :day, :hour_of_day, :minute_of_hour, :second_of_minute, :days_of_week]
   @typep represented_keys :: :interval | :day | :hour_of_day | :minute_of_hour | :second_of_minute
 
   @doc """
@@ -50,7 +50,7 @@ defmodule Cocktail.Builder.String do
   defp build_validation_part(:hour_of_day, %HourOfDay{hours: hours}), do: hours |> build_hours()
   defp build_validation_part(:minute_of_hour, %MinuteOfHour{minutes: minutes}), do: minutes |> build_minutes()
   defp build_validation_part(:second_of_minute, %SecondOfMinute{seconds: seconds}), do: seconds |> build_seconds()
-
+  defp build_validation_part(:days_of_week, %DayOfWeek{days_of_week: days_of_week}), do: days_of_week |> build_days_of_week()
   # intervals
 
   @spec build_interval(Cocktail.frequency(), pos_integer) :: String.t()
@@ -82,13 +82,35 @@ defmodule Cocktail.Builder.String do
   defp build_days_sentence(days), do: "on " <> (days |> Enum.map(&on_days/1) |> sentence)
 
   @spec on_days(Cocktail.day_number()) :: String.t()
-  defp on_days(0), do: "Sundays"
-  defp on_days(1), do: "Mondays"
-  defp on_days(2), do: "Tuesdays"
-  defp on_days(3), do: "Wednesdays"
-  defp on_days(4), do: "Thursdays"
-  defp on_days(5), do: "Fridays"
-  defp on_days(6), do: "Saturdays"
+  defp on_days(day), do: on_day(day) <> "s"
+  # defp on_days(0), do: "Sundays"
+  # defp on_days(1), do: "Mondays"
+  # defp on_days(2), do: "Tuesdays"
+  # defp on_days(3), do: "Wednesdays"
+  # defp on_days(4), do: "Thursdays"
+  # defp on_days(5), do: "Fridays"
+  # defp on_days(6), do: "Saturdays"
+
+  @spec build_days_of_week([Cocktail.day_of_week]) :: String.t()
+  defp build_days_of_week([{day, nth_occurences}]), do: 
+    "on the " <> 
+      (nth_occurences |> Enum.map(&build_occurence/1) |> sentence) <> 
+      " " <> 
+      on_day(day) 
+
+  @spec build_occurence(Cocktail.nth_occurence) :: Strint.t()
+  defp build_occurence(occurence) when occurence > 0, do: ordinalize(occurence)
+  defp build_occurence(-1), do: "last"
+  defp build_occurence(n), do: ordinalize(-n) <> " last"
+
+  @spec on_day(Cocktail.day_number()) :: String.t()
+  defp on_day(0), do: "Sunday"
+  defp on_day(1), do: "Monday"
+  defp on_day(2), do: "Tuesday"
+  defp on_day(3), do: "Wednesday"
+  defp on_day(4), do: "Thursday"
+  defp on_day(5), do: "Friday"
+  defp on_day(6), do: "Saturday"
 
   # "hour of day" validation
 

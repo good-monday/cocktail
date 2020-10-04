@@ -4,6 +4,7 @@ defmodule Cocktail.Validation do
   alias Cocktail.Validation.{
     Day,
     DayOfMonth,
+    DayOfWeek,
     HourOfDay,
     Interval,
     MinuteOfHour,
@@ -21,6 +22,7 @@ defmodule Cocktail.Validation do
           | :base_mday
           | :day
           | :day_of_month
+          | :day_of_week
           | :hour_of_day
           | :minute_of_hour
           | :second_of_minute
@@ -35,6 +37,7 @@ defmodule Cocktail.Validation do
           | Interval.t()
           | Day.t()
           | DayOfMonth.t()
+          | DayOfWeek.t()
           | HourOfDay.t()
           | MinuteOfHour.t()
           | SecondOfMinute.t()
@@ -109,6 +112,14 @@ defmodule Cocktail.Validation do
     map
     |> Map.delete(:base_mday)
     |> Map.put(:day_of_month, DayOfMonth.new(days_of_month))
+    |> apply_options(rest)
+  end
+
+  defp apply_options(map, [{:days_of_week, days_of_week} | rest]) when length(days_of_week) > 0 do
+    map
+    |> Map.delete(:base_wday)
+    |> Map.delete(:base_mday)
+    |> Map.put(:days_of_week, DayOfWeek.new(days_of_week))
     |> apply_options(rest)
   end
 

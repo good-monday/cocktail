@@ -30,8 +30,8 @@ defmodule Cocktail.MonthlyTest do
 
     assert times == [
              ~Y[2017-03-31 06:00:00 UTC],
-             ~Y[2017-04-30 06:00:00 UTC],
-             ~Y[2017-05-31 06:00:00 UTC]
+             ~Y[2017-05-31 06:00:00 UTC],
+             ~Y[2017-07-31 06:00:00 UTC]
            ]
   end
 
@@ -60,8 +60,8 @@ defmodule Cocktail.MonthlyTest do
 
     assert times == [
              ~Y[2020-02-29 06:00:00 UTC],
-             ~Y[2021-02-28 06:00:00 UTC],
-             ~Y[2022-02-28 06:00:00 UTC]
+             ~Y[2024-02-29 06:00:00 UTC],
+             ~Y[2028-02-29 06:00:00 UTC]
            ]
   end
 
@@ -188,9 +188,9 @@ defmodule Cocktail.MonthlyTest do
 
     assert times == [
              ~Y[2017-01-31 06:00:00 UTC],
-             ~Y[2017-02-28 06:00:00 UTC],
              ~Y[2017-03-31 06:00:00 UTC],
-             ~Y[2017-04-30 06:00:00 UTC]
+             ~Y[2017-05-31 06:00:00 UTC],
+             ~Y[2017-07-31 06:00:00 UTC]
            ]
   end
 
@@ -203,9 +203,24 @@ defmodule Cocktail.MonthlyTest do
       |> Enum.take(3)
 
     assert times == [
-             ~Y[2017-01-20 06:00:00 UTC],
-             ~Y[2017-02-17 06:00:00 UTC],
-             ~Y[2017-03-20 06:00:00 UTC]
+             ~Y[2017-01-21 06:00:00 UTC],
+             ~Y[2017-02-18 06:00:00 UTC],
+             ~Y[2017-03-21 06:00:00 UTC]
+           ]
+  end
+
+  test "support for last day of the month" do
+    times =
+      ~Y[2017-01-01 06:00:00 UTC]
+      |> Cocktail.schedule()
+      |> Schedule.add_recurrence_rule(:monthly, days_of_month: [-1])
+      |> Cocktail.Schedule.occurrences()
+      |> Enum.take(3)
+
+    assert times == [
+             ~Y[2017-01-31 06:00:00 UTC],
+             ~Y[2017-02-28 06:00:00 UTC],
+             ~Y[2017-03-31 06:00:00 UTC]
            ]
   end
 
@@ -240,4 +255,39 @@ defmodule Cocktail.MonthlyTest do
              ~Y[2017-03-01 10:00:00 UTC]
            ]
   end
+
+  test "Monthly on the first Tuesday of the month" do
+    times =
+      ~Y[2017-01-01 06:00:00 UTC]
+      |> Cocktail.schedule()
+      |> Schedule.add_recurrence_rule(:monthly, days_of_week: [tuesday: [1]])
+      |> Cocktail.Schedule.occurrences()
+      |> Enum.take(5)
+
+    assert times == [
+             ~Y[2017-01-03 06:00:00 UTC],
+             ~Y[2017-02-07 06:00:00 UTC],
+             ~Y[2017-03-07 06:00:00 UTC],
+             ~Y[2017-04-04 06:00:00 UTC],
+             ~Y[2017-05-02 06:00:00 UTC]
+           ]
+  end
+
+  test "Monthly on the last Friday of the month" do
+    times =
+      ~Y[2017-01-01 06:00:00 UTC]
+      |> Cocktail.schedule()
+      |> Schedule.add_recurrence_rule(:monthly, days_of_week: [friday: [-1]])
+      |> Cocktail.Schedule.occurrences()
+      |> Enum.take(5)
+
+    assert times == [
+             ~Y[2017-01-27 06:00:00 UTC],
+             ~Y[2017-02-24 06:00:00 UTC],
+             ~Y[2017-03-31 06:00:00 UTC],
+             ~Y[2017-04-28 06:00:00 UTC],
+             ~Y[2017-05-26 06:00:00 UTC]
+           ]
+  end
+
 end

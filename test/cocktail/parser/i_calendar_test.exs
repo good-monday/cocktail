@@ -2,7 +2,7 @@ defmodule Cocktail.Parser.ICalendarTest do
   use ExUnit.Case
 
   alias Cocktail.Rule
-  alias Cocktail.Validation.{Day, HourOfDay, Interval, MinuteOfHour, SecondOfMinute, TimeOfDay}
+  alias Cocktail.Validation.{Day, DayOfWeek, HourOfDay, Interval, MinuteOfHour, SecondOfMinute, TimeOfDay}
 
   import Cocktail.Parser.ICalendar
   import Cocktail.TestSupport.DateTimeSigil
@@ -104,6 +104,28 @@ defmodule Cocktail.Parser.ICalendarTest do
     assert {:ok, schedule} = parse(schedule_string)
     assert [%Rule{} = rule] = schedule.recurrence_rules
     assert rule.validations[:time_of_day] == %TimeOfDay{times: [{9, 0, 0}, {10, 0, 0}, {11, 0, 0}]}
+  end
+
+  test "parse a schedule for every month on the 1st Monday" do
+    schedule_string = """
+    DTSTART:20170810T090000
+    RRULE:FREQ=MONTHLY;INTERVAL=1;BYDAY=+1MO
+    """
+
+    assert {:ok, schedule} = parse(schedule_string)
+    assert [%Rule{} = rule] = schedule.recurrence_rules
+    assert rule.validations[:days_of_week] == %DayOfWeek{days_of_week: [{1, [1]}]}    
+  end
+
+  test "parse a schedule for every month on the last Friday" do
+    schedule_string = """
+    DTSTART:20170810T090000
+    RRULE:FREQ=MONTHLY;INTERVAL=1;BYDAY=-1FR
+    """
+
+    assert {:ok, schedule} = parse(schedule_string)
+    assert [%Rule{} = rule] = schedule.recurrence_rules
+    assert rule.validations[:days_of_week] == %DayOfWeek{days_of_week: [{5, [-1]}]}    
   end
 
   ##########

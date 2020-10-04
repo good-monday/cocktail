@@ -159,6 +159,18 @@ defmodule Cocktail.Parser.ICalendar do
     end
   end
 
+  defp parse_rrule_option("BYDAY=+" <> days_of_week_string) do
+    with {:ok, days_of_week} <- parse_days_of_week_string("+" <> days_of_week_string) do
+      {:ok, {:days_of_week, days_of_week |> Enum.reverse()}}
+    end
+  end
+
+  defp parse_rrule_option("BYDAY=-" <> days_of_week_string) do
+    with {:ok, days_of_week} <- parse_days_of_week_string("-" <> days_of_week_string) do
+      {:ok, {:days_of_week, days_of_week |> Enum.reverse()}}
+    end
+  end
+
   defp parse_rrule_option("BYDAY=" <> days_string) do
     with {:ok, days} <- parse_days_string(days_string) do
       {:ok, {:days, days |> Enum.reverse()}}
@@ -200,7 +212,26 @@ defmodule Cocktail.Parser.ICalendar do
 
   defp parse_rrule_option(_), do: {:error, :unknown_rrulparam}
 
+  @type parse_result :: {:ok, any()} | {:error, atom()}
+  @type parse_fun :: fun(any()) :: parse_result()
+  @spec parse_bind(parse_result(), parse_fun()) :: parse_result()
+  defp parse_bind(val, fun) do
+    case val do
+      {:ok, value} -> fun.(value)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @spec parse_error_reduce([parse_result()]) :: [any()] | {:error, atom()}
+  defp parse_error_reduce(list) do
+    list
+    |> Enum.reduce({:ok, []}, fn (val, acc) ->
+      parse_bind(acc, fn (list) -> parse_bind(val, &[&1 | list]) end) 
+    end)
+  end
+
   @spec parse_frequency(String.t()) :: {:ok, Cocktail.frequency()} | {:error, :invalid_frequency}
+  defp parse_frequency("MONTHLY"), do: {:ok, :monthly}
   defp parse_frequency("WEEKLY"), do: {:ok, :weekly}
   defp parse_frequency("DAILY"), do: {:ok, :daily}
   defp parse_frequency("HOURLY"), do: {:ok, :hourly}
@@ -259,6 +290,44 @@ defmodule Cocktail.Parser.ICalendar do
   defp parse_day("FR"), do: {:ok, :friday}
   defp parse_day("SA"), do: {:ok, :saturday}
   defp parse_day(_), do: {:error, :invalid_day}
+
+  @spec parse_days_of_week_string(String.t()) :: {:ok, [Cocktail.day_of_week()]} | {:error, :invalid_day_of_week}
+  defp parse_days_of_week_string(days_of_week_string) do
+    days_of_week_string
+    |> String.split(",")
+    |> Enum.map(&parse_day_of_week_string/1)
+    |> parse_error_reduce
+    |> Enum.group_by(&(elem(&1, 0)))
+    |> Enum.map(fn {day_atom, list} -> {day_atom, Enum.map(list, &(elem(&1, 1)))} end)
+    |> case do
+      {:error, reason} -> {:error, reason}
+      val -> {:ok, val}
+    end
+  end
+
+  @spec parse_day_of_week_string(binary()) :: {:ok, {Cocktail.day_atom(), [integer()]}} 
+                                            | {:error, :invalid_day} 
+                                            | {:error, :invalid_nth_occurence}
+  defp parse_day_of_week_string(<<num::binary-size(2), day::binary-size(2)>>) do
+    parse_day(day)
+    |> parse_bind(fn (day_atom) -> 
+      parse_nth_occurence(num) |> parse_bind(&({:ok, {day_atom, &1}})) 
+    end)
+  end
+
+  @spec parse_nth_occurence(String.t()) :: {:ok, integer()} | {:error, :invalid_nth_occurence}
+  defp parse_nth_occurence(nth_occurence_string) do
+    with {integer, _} <- Integer.parse(nth_occurence_string),
+         {:ok, nth_occurence} <- validate_nth_occurence(integer) do
+      {:ok, nth_occurence}
+    else
+      :error -> {:error, :invalid_nth_occurence}
+    end
+  end
+
+  @spec validate_nth_occurence(integer) :: {:ok, Cocktail.nth_occurence()} | :error
+  defp validate_nth_occurence(n) when (n >= 1 and n <= 5) or (n <= -1 and n >= -5), do: {:ok, n}
+  defp validate_nth_occurence(_), do: :error
 
   # hour of day
 

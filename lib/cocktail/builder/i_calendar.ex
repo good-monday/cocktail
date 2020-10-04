@@ -6,7 +6,7 @@ defmodule Cocktail.Builder.ICalendar do
   """
 
   alias Cocktail.{Rule, Schedule, Validation}
-  alias Cocktail.Validation.{Day, HourOfDay, Interval, MinuteOfHour, SecondOfMinute, TimeOfDay, TimeRange}
+  alias Cocktail.Validation.{Day, HourOfDay, Interval, MinuteOfHour, SecondOfMinute, TimeOfDay, TimeRange, DayOfWeek}
 
   @time_format_string "{YYYY}{0M}{0D}T{h24}{m}{s}"
 
@@ -92,7 +92,7 @@ defmodule Cocktail.Builder.ICalendar do
   @spec build_rule(Rule.t()) :: String.t()
   defp build_rule(%Rule{validations: validations_map, until: until, count: count}) do
     parts =
-      for key <- [:interval, :day, :hour_of_day, :minute_of_hour, :second_of_minute, :time_of_day, :time_range],
+      for key <- [:interval, :day, :days_of_week, :hour_of_day, :minute_of_hour, :second_of_minute, :time_of_day, :time_range],
           validation = validations_map[key],
           !is_nil(validation) do
         build_validation_part(key, validation)
@@ -106,6 +106,7 @@ defmodule Cocktail.Builder.ICalendar do
   @spec build_validation_part(Validation.validation_key(), Validation.t()) :: String.t()
   defp build_validation_part(:interval, %Interval{interval: interval, type: type}), do: build_interval(type, interval)
   defp build_validation_part(:day, %Day{days: days}), do: days |> build_days()
+  defp build_validation_part(:days_of_week, %DayOfWeek{days_of_week: days_of_week}), do: days_of_week |> build_days_of_week()
   defp build_validation_part(:hour_of_day, %HourOfDay{hours: hours}), do: hours |> build_hours()
   defp build_validation_part(:minute_of_hour, %MinuteOfHour{minutes: minutes}), do: minutes |> build_minutes()
   defp build_validation_part(:second_of_minute, %SecondOfMinute{seconds: seconds}), do: seconds |> build_seconds()
@@ -150,6 +151,27 @@ defmodule Cocktail.Builder.ICalendar do
   defp by_day(4), do: "TH"
   defp by_day(5), do: "FR"
   defp by_day(6), do: "SA"
+
+  @spec build_days_of_week([Cocktail.day_of_week()]) :: String.t()
+  defp build_days_of_week(days_of_week) do
+    days_list =
+      days_of_week
+      |> Enum.map(&build_day_of_week/1)
+      |> Enum.join(",")
+
+    "BYDAY=#{days_list}"
+  end
+
+  @spec build_day_of_week(Cocktail.day_of_week()) :: String.t()
+  defp build_day_of_week({day, nth_occurences}) do
+    nth_occurences
+    |> Enum.map(&(occurence(&1) <> by_day(day)))
+    |> Enum.join(",")
+  end
+
+  @spec occurence(Cocktail.nth_occurence()) :: String.t()
+  defp occurence(no) when no > 0, do: "+" <> Integer.to_string(no)
+  defp occurence(no), do: Integer.to_string(no)
 
   # "hour of day" validation
 
